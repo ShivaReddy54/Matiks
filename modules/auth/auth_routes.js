@@ -1,0 +1,13 @@
+const express = require('express')
+const auth_router = express()
+const auth_controller = require('./auth_controller')
+
+// TODO -> Add JWT Middleware here 
+
+auth_router.post('/register', auth_controller.register);
+auth_router.post('/login', auth_controller.login);
+auth_router.post('/logout', auth_controller.logout);
+auth_router.post('/forget-password', auth_controller.forget_password);
+auth_router.post('/reset-password', auth_controller.reset_password);
+
+module.exports = auth_router;
