@@ -1,5 +1,6 @@
 const express = require('express')
 require('dotenv').config()
+const cookieParser = require('cookie-parser')
 const Connect_Database  = require('./utils/connections.js')
 const auth_router  = require('./modules/auth/auth_routes.js')
 const app = express()
@@ -7,7 +8,7 @@ const app = express()
 
 // Middlewares
 app.use(express.json());
-
+app.use(cookieParser())
 
 // Mount Routes
 app.use('/api/auth', auth_router);

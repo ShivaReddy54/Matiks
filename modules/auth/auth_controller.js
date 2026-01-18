@@ -2,9 +2,6 @@ const bcrypt = require('bcrypt')
 const User = require('./auth_model.js')
 const { GenerateToken, ValidateToken } = require('../../utils/jwt_service.js');
 
-
-// TODO -> Add JWT
-
 /*  Auth User Creation */
 exports.register = async (req, res) => {
     try{
@@ -38,8 +35,16 @@ exports.login = async (req, res) => {
         const user = await User.findOne({ email });
         if(!user || !(await bcrypt.compare(password, user.password))) 
             return res.status(400).json({ error: "User Not Found or Password not matched"});
-        // TODO -> Add JWT here 
+
         const token = GenerateToken({ email: user.email, _id: user._id });
+        res.cookie('token', token, {
+            httpOnly: true,     
+            // TODO -> Make this uncomment for production ready 
+            // secure: true,       
+            sameSite: 'strict',
+            maxAge: 900000   
+        });
+
         return res.status(200).json({ message: "User successfully Logged in", token});
     }catch(err){
         return res.status(400).json({ error: err})
@@ -52,6 +57,12 @@ exports.logout = async (req, res) => {
     // TODO -> Take Cookie and add it to redis and clear in Localstorage
 
     try{
+        res.clearCookie('token', {
+            httpOnly: true,
+            // TODO -> Make this uncomment for production ready 
+            // secure: true,
+            sameSite: 'strict'
+        })
         return res.status(200).json({ message: "User Successfully logged out"});
     }catch(err){
         return res.status(400).json({ error: err})
@@ -84,7 +95,7 @@ exports.reset_password = async (req, res) => {
     try{
         const { email, password } = req.body;
         if(!email || !password) return res.status(400).json({ error: "Please include all the fields"});
-        console.log("hi")
+
         // TODO -> Instead of email take the reset JWT and verify its expiry <-- DONE
         const salt = await bcrypt.genSalt(10);
         const hashed_password = await bcrypt.hash(password, salt);

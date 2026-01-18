@@ -2,11 +2,8 @@
 const { ValidateToken } = require('../utils/jwt_service')
 
 const authenticate = (req, res, next) => {
-    const authHeader = req.headers['authorization'];
-    if(!authHeader || !authHeader.startsWith('Bearer ')) 
-        return res.status(401).json({ error: "Access Denied, No Token Provided" });
-
-    const token = authHeader.split(' ')[1]; 
+    const token = req.cookies.token;
+    if(!token) return res.status(404).json({ error: "No Token Provided" });
 
     try{
         const decoded = ValidateToken(token);
