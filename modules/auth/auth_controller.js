@@ -22,7 +22,7 @@ exports.register = async (req, res) => {
         return res.status(201).json({ message: "User Successfully Registered"});
 
     }catch(err){
-        return res.status(400).json({ error: err})
+        return res.status(400).json({ error: err});
     }
 }
 
@@ -75,10 +75,10 @@ exports.forget_password = async (req, res) => {
     try{
         const { email } = req.body;
         if(!email) return res.status(400).json({ error: "Please include all fields"});
-
-        const user = await User.findOne(email);
+        
+        const user = await User.findOne({ email });
         if(!user) return res.status(404).json({ error: "User not Found"});
-
+        
         // TODO -> send it through the email and hit reset-pass route
         const token = GenerateToken({ email: email, _id: user._id });
         const resetLink = `${process.env.CLIENT_URL}/reset-password?token=${token}`

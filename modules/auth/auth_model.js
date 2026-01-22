@@ -1,6 +1,9 @@
 const mongoose = require('mongoose')
 
 const userSchema = new mongoose.Schema({
+
+    // TODO -> Remove rating from here and store only user details in this schema
+
     username: {
         type: String,
         required: true,
