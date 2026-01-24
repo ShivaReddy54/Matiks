@@ -4,9 +4,6 @@ const auth_controller = require('./auth_controller')
 const authenticate = require('../../midddlewares/auth_Middleware');
 
 
-
-// TODO -> Add JWT Middleware here 
-
 auth_router.post('/register', auth_controller.register);
 auth_router.post('/login', auth_controller.login);
 auth_router.post('/logout', authenticate, auth_controller.logout);
