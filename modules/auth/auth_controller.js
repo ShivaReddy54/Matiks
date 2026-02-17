@@ -30,6 +30,16 @@ exports.register = async (req, res) => {
 /* Auth User Login  */
 exports.login = async (req, res) => {
     try{
+        // const existinggToken = req.cookie.token;
+        // if(existinggToken){
+        //     try{
+        //         const decoded = ValidateToken(existinggToken);
+        //         if(decoded) return res.status(200).json({ message: "Already logged in", user: decoded});
+        //     }catch(err){
+        //         return res.status(400).json({ error: err });
+        //     }
+        // }
+
         const { email, password } = req.body;
         if(!email || !password ) return res.status(400).json({ error: "Please include all fields" });
         const user = await User.findOne({ email });

@@ -1,4 +1,6 @@
 const mongoose = require('mongoose')
+const dns = require('dns')
+dns.setServers(['1.1.1.1', '8.8.8.8']); // Use Cloudflare and Google DNS
 
 async function Connect_Database(){
     try{
@@ -7,7 +9,8 @@ async function Connect_Database(){
     }
     catch(err){
         console.log(`Error connecting the database ${err}`)
+        process.exit(1)
     }
 }
 
-module.exports = Connect_Database;
+module.exports = Connect_Database

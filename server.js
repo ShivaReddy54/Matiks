@@ -18,6 +18,24 @@ app.use('/api/user', user_router);
 app.use('/api/match', match_router);
 
 
+/*
+
+User 1:
+    {
+  "username": "shiva",
+  "email": "test@gmail.com",
+  "password": "1"
+}
+
+user 2:
+{
+  "username": "Reddy",
+  "email": "Reddy@gmail.com",
+  "password": "1"
+}
+
+*/
+
 // TODO -> Update the error codes of catch block to 500
 
 const port = process.env.PORT || 3000
@@ -30,7 +48,7 @@ const Server = async () => {
             console.log(`Server Started at port ${port}`)
         })
     }catch(err){
-        console.log(`Error starting the server`)
+        console.log(`Error starting the server ${err}`)
     }
 }
 
