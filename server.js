@@ -6,6 +6,8 @@ const auth_router  = require('./modules/auth/auth_routes.js');
 const user_router = require('./modules/users/user_routes.js');
 const match_router = require('./modules/match/match_routes.js');
 const matchMaking_router = require('./modules/matchmaking/matchMaking_routes.js');
+const game_router = require('./modules/game/game_routes.js');
+const leaderboard_router = require('./modules/leaderboard/leaderboard_routes.js');
 const app = express();
 
 
@@ -18,6 +20,8 @@ app.use('/api/auth', auth_router);
 app.use('/api/user', user_router);
 app.use('/api/match', match_router);
 app.use('/api/matchmaking', matchMaking_router);
+app.use('/api/game', game_router);
+app.use('/api/leaderboard', leaderboard_router);
 
 
 /*
