@@ -51,8 +51,8 @@ const gameSchema = new mongoose.Schema(
     { timestamps: true }
 );
 
-gameSchema.index({ match: 1 });
-gameSchema.index({ status: 1 });
+// gameSchema.index({ match: 1 });
+// gameSchema.index({ status: 1 });
 
 const Game = mongoose.model('Game', gameSchema);
 module.exports = Game;

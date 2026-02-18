@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>1v1 Math Quiz</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', system-ui, sans-serif; background: #1a1a2e; color: #eee; min-height: 100vh; padding: 1rem; }
+        .container { max-width: 480px; margin: 0 auto; }
+        h1 { font-size: 1.5rem; margin-bottom: 1.5rem; color: #00d9ff; }
+        .panel { background: #16213e; border-radius: 12px; padding: 1.25rem; margin-bottom: 1rem; }
+        .panel h2 { font-size: 0.9rem; color: #8892b0; margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; }
+        input, button { padding: 0.6rem 1rem; border-radius: 8px; border: 1px solid #0f3460; font-size: 1rem; }
+        input { background: #0f3460; color: #fff; width: 100%; margin-bottom: 0.5rem; }
+        button { background: #00d9ff; color: #1a1a2e; border: none; cursor: pointer; font-weight: 600; width: 100%; margin-top: 0.5rem; }
+        button:hover { background: #00b8d9; }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-secondary { background: #0f3460; color: #00d9ff; }
+        .btn-danger { background: #e94560; color: #fff; }
+        .flex { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+        .flex button { flex: 1; min-width: 120px; }
+        .status { padding: 0.5rem; border-radius: 8px; margin-bottom: 0.75rem; font-size: 0.9rem; }
+        .status.info { background: #0f3460; }
+        .status.success { background: #0d5c2e; }
+        .status.error { background: #5c0d0d; }
+        .hidden { display: none !important; }
+        .question { font-size: 2rem; text-align: center; padding: 1.5rem; background: #0f3460; border-radius: 8px; margin: 1rem 0; }
+        .scores { display: flex; justify-content: space-between; margin: 1rem 0; font-size: 1.1rem; }
+        .timer { text-align: center; font-size: 1.5rem; color: #00d9ff; margin: 0.5rem 0; }
+        .result { text-align: center; padding: 1rem; }
+        .result.win { color: #4ade80; }
+        .result.lose { color: #e94560; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>1v1 Math Quiz</h1>
+        <div id="status" class="status hidden"></div>
+
+        <div id="authPanel" class="panel">
+            <h2>Auth</h2>
+            <input id="authUsername" placeholder="Username" />
+            <input id="authEmail" type="email" placeholder="Email" />
+            <input id="authPassword" type="password" placeholder="Password" />
+            <div class="flex">
+                <button onclick="register()">Register</button>
+                <button onclick="login()" class="btn-secondary">Login</button>
+                <button onclick="logout()" class="btn-danger">Logout</button>
+            </div>
+        </div>
+
+        <div id="mainPanel" class="panel hidden">
+            <h2>Matchmaking</h2>
+            <p id="userInfo" style="margin-bottom:0.75rem;font-size:0.9rem;"></p>
+            <div class="flex">
+                <button id="btnJoin" onclick="joinQueue()">Enter 1v1</button>
+                <button id="btnLeave" onclick="leaveQueue()" class="btn-secondary">Leave</button>
+            </div>
+        </div>
+
+        <div id="gamePanel" class="panel hidden">
+            <h2>Game</h2>
+            <div class="scores"><span id="p1Score">0</span> vs <span id="p2Score">0</span></div>
+            <div class="timer" id="timer">60</div>
+            <div id="questionBox" class="question hidden"></div>
+            <input id="answerInput" type="number" placeholder="Your answer" class="hidden" />
+            <button id="btnSubmit" onclick="submitAnswer()" class="hidden">Submit</button>
+            <div id="resultBox" class="result hidden"></div>
+        </div>
+
+        <div id="leaderboardPanel" class="panel">
+            <h2>Leaderboard</h2>
+            <button onclick="loadLeaderboard()">Refresh</button>
+            <div id="leaderboard" style="margin-top:0.75rem;"></div>
+        </div>
+    </div>
+
+    <script>
+        const API = '';
+        let gameState = { gameId: null, matchId: null, questions: [], currentIdx: 0, timerInterval: null, endTimeoutId: null };
+
+        function showStatus(msg, type = 'info') {
+            const el = document.getElementById('status');
+            el.textContent = msg;
+            el.className = 'status ' + type;
+            el.classList.remove('hidden');
+        }
+        function hideStatus() { document.getElementById('status').classList.add('hidden'); }
+
+        async function api(path, opts = {}) {
+            const res = await fetch(API + path, { credentials: 'include', ...opts });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(data.error || res.statusText);
+            return data;
+        }
+
+        async function checkAuth() {
+            try {
+                const r = await api('/api/user/me');
+                document.getElementById('mainPanel').classList.remove('hidden');
+                document.getElementById('userInfo').textContent = `${r.response?.username || '?'} | Rating: ${r.response?.rating ?? '?'}`;
+                return true;
+            } catch {
+                document.getElementById('mainPanel').classList.add('hidden');
+                return false;
+            }
+        }
+
+        async function register() {
+            try {
+                await api('/api/auth/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username: document.getElementById('authUsername').value,
+                        email: document.getElementById('authEmail').value,
+                        password: document.getElementById('authPassword').value
+                    })
+                });
+                showStatus('Registered! You can login.', 'success');
+            } catch (e) { showStatus(e.message, 'error'); }
+        }
+
+        async function login() {
+            try {
+                await api('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: document.getElementById('authEmail').value,
+                        password: document.getElementById('authPassword').value
+                    })
+                });
+                showStatus('Logged in!', 'success');
+                checkAuth();
+            } catch (e) { showStatus(e.message, 'error'); }
+        }
+
+        async function logout() {
+            try {
+                await api('/api/auth/logout', { method: 'POST' });
+                showStatus('Logged out');
+                checkAuth();
+                hideGame();
+            } catch (e) { showStatus(e.message, 'error'); }
+        }
+
+        async function joinQueue() {
+            try {
+                const r = await api('/api/matchmaking/join', { method: 'POST' });
+                if (r.status === 'MATCHED') {
+                    showStatus('Match found!', 'success');
+                    startGame(r.matchId, r.match, r);
+                } else {
+                    showStatus('Searching... Leave to cancel.');
+                    document.getElementById('btnJoin').disabled = true;
+                    pollStatus();
+                }
+            } catch (e) { showStatus(e.message, 'error'); }
+        }
+
+        function pollStatus() {
+            const iv = setInterval(async () => {
+                try {
+                    const r = await api('/api/matchmaking/status');
+                    if (r.status === 'MATCHED') {
+                        clearInterval(iv);
+                        document.getElementById('btnJoin').disabled = false;
+                        startGame(r.matchId, r.match, r);
+                    }
+                } catch { clearInterval(iv); }
+            }, 2000);
+        }
+
+        async function leaveQueue() {
+            try {
+                await api('/api/matchmaking/leave', { method: 'POST' });
+                showStatus('Left queue');
+                document.getElementById('btnJoin').disabled = false;
+                hideGame();
+            } catch (e) { showStatus(e.message, 'error'); }
+        }
+
+        async function startGame(matchId, match, joinRes) {
+            try {
+                const r = joinRes || await api(`/api/matchmaking/status`);
+                const mid = matchId || r.matchId;
+                const g = await api(`/api/game/start/${mid}`, { method: 'POST' });
+                gameState = { gameId: g.gameId, matchId: mid, questions: g.questions || [], currentIdx: 0 };
+                document.getElementById('gamePanel').classList.remove('hidden');
+                document.getElementById('btnJoin').disabled = false;
+                document.getElementById('p1Score').textContent = g.player1Score ?? 0;
+                document.getElementById('p2Score').textContent = g.player2Score ?? 0;
+                document.getElementById('resultBox').classList.add('hidden');
+                if (g.status === 'COMPLETED') {
+                    showResult(g);
+                } else {
+                    startTimer(g.endTime);
+                    showNextQuestion();
+                }
+            } catch (e) { showStatus(e.message, 'error'); }
+        }
+
+        function showNextQuestion() {
+            const qs = gameState.questions;
+            if (!qs || gameState.currentIdx >= qs.length) return;
+            const q = qs[gameState.currentIdx];
+            const op = { '+': '+', '-': '−', '*': '×' }[q.op] || q.op;
+            document.getElementById('questionBox').textContent = `${q.num1} ${op} ${q.num2} = ?`;
+            document.getElementById('questionBox').classList.remove('hidden');
+            document.getElementById('answerInput').classList.remove('hidden');
+            document.getElementById('answerInput').value = '';
+            document.getElementById('btnSubmit').classList.remove('hidden');
+        }
+
+        async function submitAnswer() {
+            const val = document.getElementById('answerInput').value;
+            if (val === '') return;
+            try {
+                const r = await api(`/api/game/${gameState.gameId}/answer`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ questionIndex: gameState.currentIdx, answer: parseInt(val, 10) })
+                });
+                document.getElementById('p1Score').textContent = r.player1Score;
+                document.getElementById('p2Score').textContent = r.player2Score;
+                gameState.currentIdx++;
+                if (gameState.currentIdx < gameState.questions.length) {
+                    showNextQuestion();
+                } else {
+                    document.getElementById('questionBox').classList.add('hidden');
+                    document.getElementById('answerInput').classList.add('hidden');
+                    document.getElementById('btnSubmit').classList.add('hidden');
+                }
+            } catch (e) {
+                if (e.message.includes('Time is up') || e.message.includes('ended')) {
+                    fetchResult();
+                } else showStatus(e.message, 'error');
+            }
+        }
+
+        function startTimer(endTime) {
+            if (gameState.timerInterval) clearInterval(gameState.timerInterval);
+            if (gameState.endTimeoutId) clearTimeout(gameState.endTimeoutId);
+            const endMs = new Date(endTime) - Date.now();
+            gameState.endTimeoutId = setTimeout(() => {
+                gameState.timerInterval && clearInterval(gameState.timerInterval);
+                gameState.timerInterval = null;
+                document.getElementById('timer').textContent = '0';
+                fetchResult();
+            }, Math.max(0, endMs));
+            const tick = () => {
+                const sec = Math.max(0, Math.ceil((new Date(endTime) - Date.now()) / 1000));
+                document.getElementById('timer').textContent = sec;
+                if (sec <= 0) clearInterval(gameState.timerInterval);
+            };
+            tick();
+            gameState.timerInterval = setInterval(tick, 500);
+        }
+
+        async function fetchResult() {
+            if (gameState.timerInterval) clearInterval(gameState.timerInterval);
+            if (gameState.endTimeoutId) clearTimeout(gameState.endTimeoutId);
+            gameState.timerInterval = null;
+            gameState.endTimeoutId = null;
+            try {
+                const r = await api(`/api/game/${gameState.gameId}/result`);
+                showResult(r);
+            } catch (e) { showStatus(e.message, 'error'); }
+        }
+
+        function showResult(g) {
+            document.getElementById('questionBox').classList.add('hidden');
+            document.getElementById('answerInput').classList.add('hidden');
+            document.getElementById('btnSubmit').classList.add('hidden');
+            const rb = document.getElementById('resultBox');
+            rb.classList.remove('hidden');
+            rb.textContent = `Game over! ${g.player1Score} - ${g.player2Score}`;
+            rb.className = 'result';
+        }
+
+        function hideGame() {
+            document.getElementById('gamePanel').classList.add('hidden');
+            if (gameState.timerInterval) clearInterval(gameState.timerInterval);
+            if (gameState.endTimeoutId) clearTimeout(gameState.endTimeoutId);
+            gameState.timerInterval = null;
+            gameState.endTimeoutId = null;
+        }
+
+        async function loadLeaderboard() {
+            const lb = document.getElementById('leaderboard');
+            try {
+                const r = await api('/api/leaderboard?limit=10');
+                lb.innerHTML = r.leaderboard?.map(u => `<div>#${u.rank} ${u.username} - ${u.rating}</div>`).join('') || 'Empty';
+            } catch (e) { lb.innerHTML = e.message; }
+        }
+
+        checkAuth();
+        loadLeaderboard();
+    </script>
+</body>
+</html>

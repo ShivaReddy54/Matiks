@@ -1,19 +1,18 @@
-const User = require('../auth/auth_model')
-const { GenerateToken } = require('../../utils/jwt_service')
+const User = require('../auth/auth_model');
+const { GenerateToken } = require('../../utils/jwt_service');
+const { authCookieOptions } = require('../../utils/cookie_options.js');
 
 
 /* User Currently logged in */
 exports.current_user = async (req, res) => {
-    try{
-        const { email, id }= req.user;
-
-        const response = await User.findOne({ email }).select('username email _id rating')
-        return res.status(200).json({ message: "User details fetched successfully", response })
+    try {
+        const { email } = req.user;
+        const response = await User.findOne({ email }).select('username email _id rating');
+        return res.status(200).json({ message: 'User details fetched successfully', response });
+    } catch (err) {
+        return res.status(500).json({ error: err.message || err });
     }
-    catch(err){
-        return res.status(400).json({ error: err});
-    }
-}
+};
 
 
 /*  User details update  */
@@ -34,23 +33,16 @@ exports.update = async (req, res) => {
         const response = await User.findByIdAndUpdate( _id, { $set: updates }, { new: true, runValidators: true });
         if(!response) return res.status(404).json({ error: "Error updating the user details"})
         
-        if(updates.email){
+        if (updates.email) {
             const token = GenerateToken({ email: response.email, _id: response._id });
-            res.cookie('token', token, {
-                httpOnly: true,
-                // TODO -> Make this uncomment for production ready 
-                // secure: true,
-                sameSite: 'strict',
-                maxAge: 900000
-            });
+            res.cookie('token', token, authCookieOptions());
         }
 
-        return res.status(200).json({ message: "User details updated successfully"});
+        return res.status(200).json({ message: 'User details updated successfully' });
+    } catch (err) {
+        return res.status(500).json({ error: err.message || err });
     }
-    catch(err){
-        return res.status(400).json({ error: err});
-    }
-}
+};
 
 
 /*  Public User info  */
@@ -62,12 +54,8 @@ exports.user_info = async(req, res) => {
         const response = await User.findOne({ username }).select("_id username email rating");
         if(!response) return res.status(404).json({ error: "User not found" });
 
-        return res.status(200).json({ message: "User fetched successfully", response});
+        return res.status(200).json({ message: 'User fetched successfully', response });
+    } catch (err) {
+        return res.status(500).json({ error: err.message || err });
     }
-    catch(err){
-        return res.status(400).json({ error: err});
-    }
-}
-
-
-// TODO -> Add a route to get only the stats of user in future
+};

@@ -267,6 +267,9 @@ async function finalizeGame(game) {
         }
     }
 
+    const p1NewRating = Math.max(0, p1.rating + p1RatingChange);
+    const p2NewRating = Math.max(0, p2.rating + p2RatingChange);
+
     await Promise.all([
         Game.findByIdAndUpdate(game._id, {
             status: 'COMPLETED',
@@ -279,7 +282,7 @@ async function finalizeGame(game) {
             endTime: new Date(),
             winner
         }),
-        User.findByIdAndUpdate(game.player1, { $inc: { rating: p1RatingChange } }),
-        User.findByIdAndUpdate(game.player2, { $inc: { rating: p2RatingChange } })
+        User.findByIdAndUpdate(game.player1, { $set: { rating: p1NewRating } }),
+        User.findByIdAndUpdate(game.player2, { $set: { rating: p2NewRating } })
     ]);
 }
