@@ -1,0 +1,93 @@
+.wrapper {
+  padding: 2rem 0;
+}
+
+.card {
+  background: rgba(22, 33, 62, 0.8);
+  border: 1px solid rgba(0, 217, 255, 0.2);
+  border-radius: 16px;
+  padding: 2rem;
+}
+
+.title {
+  font-size: 1.25rem;
+  color: #ccd6f6;
+  margin-bottom: 1rem;
+}
+
+.myRank {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  background: rgba(0, 217, 255, 0.1);
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  color: #00d9ff;
+  font-weight: 600;
+}
+
+.loading {
+  text-align: center;
+  color: #8892b0;
+  padding: 2rem;
+}
+
+.list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid rgba(136, 146, 176, 0.2);
+  gap: 1rem;
+}
+
+.row:last-child {
+  border-bottom: none;
+}
+
+.rank {
+  color: #8892b0;
+  font-size: 0.9rem;
+  min-width: 2.5rem;
+}
+
+.username {
+  flex: 1;
+  color: #ccd6f6;
+}
+
+.rating {
+  color: #00d9ff;
+  font-weight: 600;
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.pageBtn {
+  background: #0f3460;
+  color: #00d9ff;
+  border: 1px solid #0f3460;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.pageBtn:hover:not(:disabled) {
+  border-color: #00d9ff;
+}
+
+.pageBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

@@ -18,9 +18,8 @@ const app = express();
 app.use(cors({ origin: process.env.CLIENT_URL || true, credentials: true }));
 app.use(express.json());
 app.use(cookieParser());
-app.use(express.static('public'));
+// app.use(express.static('public'));
 
-// Routes
 app.use('/api/auth', auth_router);
 app.use('/api/user', user_router);
 app.use('/api/match', match_router);

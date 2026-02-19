@@ -60,11 +60,24 @@ exports.start_game = async (req, res) => {
             game = game.toObject ? game.toObject() : game;
         }
 
+        /* Auto-finalize if time expired – ensures lobby sees IDLE after refresh */
+        if (game.status === 'ACTIVE' && new Date() > new Date(game.endTime)) {
+            const gameDoc = await Game.findById(game._id);
+            await finalizeGame(gameDoc);
+            game = await Game.findById(game._id)
+                .populate('player1', 'username rating')
+                .populate('player2', 'username rating')
+                .populate('winner', 'username')
+                .lean();
+        }
+
         if (game.status === 'COMPLETED') {
             return res.status(200).json({
                 status: 'COMPLETED',
                 message: 'Game ended',
                 gameId: game._id,
+                player1: game.player1,
+                player2: game.player2,
                 player1Score: game.player1Score,
                 player2Score: game.player2Score,
                 winner: game.winner,
